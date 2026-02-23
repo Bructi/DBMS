@@ -9,18 +9,22 @@ router.get("/:userId", (req, res) => {
 
     const query = `
     SELECT 
+      p.id,  -- Added this line so we have the specific investment ID!
       mf.fund_name,
-      mf.category,
+      mf.ticker_symbol,
       p.investment_amount,
       p.investment_type,
       p.investment_date
     FROM portfolio p
-    JOIN mutual_funds mf ON p.fund_id = mf.fund_id
+    JOIN mutual_funds mf ON p.fund_id = mf.id
     WHERE p.user_id = ?
   `;
 
     db.query(query, [userId], (err, result) => {
-        if (err) return res.status(500).json(err);
+        if (err) {
+            console.error("Database Error:", err);
+            return res.status(500).json({ error: "Database query failed" });
+        }
         res.json(result);
     });
 });

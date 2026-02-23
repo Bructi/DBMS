@@ -4,7 +4,7 @@ export const db = mysql.createConnection({
     host: "localhost",
     user: "root",
     password: "",        // put password if you have one
-    database: "investiq"
+    database: "investiq_db"
 });
 
 db.connect(err => {
