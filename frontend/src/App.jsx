@@ -6,13 +6,12 @@ import FundList from "./pages/FundList";
 import Analytics from "./pages/Analytics";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import LandingPage from "./pages/LandingPage"; // <-- 1. Import the new Landing Page
 
 function App() {
-  // State to hold our logged-in user
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // When the app loads, check if they are already logged in (via LocalStorage)
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -25,18 +24,18 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50 font-sans text-gray-900 selection:bg-brand-100 selection:text-brand-900">
-        
-        {/* Only show the Navbar if the user is logged in */}
+      <div className="min-h-screen bg-gray-50 font-sans text-gray-900 selection:bg-blue-100 selection:text-blue-900">
+
+        {/* Only show the App Navbar if the user IS logged in. The Landing Page has its own special public Navbar. */}
         {user && <Navbar user={user} setUser={setUser} />}
 
         <Routes>
-          {/* Public Routes */}
           <Route path="/login" element={!user ? <Login setUser={setUser} /> : <Navigate to="/" />} />
           <Route path="/register" element={!user ? <Register /> : <Navigate to="/" />} />
 
-          {/* Protected Routes (Must be logged in) */}
-          <Route path="/" element={user ? <Dashboard user={user} /> : <Navigate to="/login" />} />
+          {/* 2. THE MAGIC FIX: If user exists, show Dashboard. If NOT, show LandingPage! */}
+          <Route path="/" element={user ? <Dashboard user={user} /> : <LandingPage />} />
+
           <Route path="/funds" element={user ? <FundList user={user} /> : <Navigate to="/login" />} />
           <Route path="/analytics" element={user ? <Analytics user={user} /> : <Navigate to="/login" />} />
         </Routes>
