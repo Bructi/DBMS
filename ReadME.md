@@ -32,7 +32,7 @@ Make sure you have [Node.js](https://nodejs.org/) and [XAMPP](https://www.apache
 
 ### 2. Clone the Repository
 ```bash
-git clone [https://github.com/yourusername/investiq.git](https://github.com/yourusername/investiq.git)
+git clone https://github.com/Bructi/investiq.git
 cd investiq 
 
 

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { io } from "socket.io-client";
 import { 
   PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend, 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
@@ -8,15 +9,18 @@ import {
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 import { DownloadCloud, Target, ShieldAlert, Award, AlertCircle } from "lucide-react";
+import "./Analytics.css";
 
 const Analytics = ({ user }) => {
   const [chartData, setChartData] = useState([]);
+  const [liveMarketData, setLiveMarketData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
   const userId = user?.id || 1;
   const reportRef = useRef();
 
+  // 1. Fetch User Portfolio Data
   useEffect(() => {
     fetch(`http://localhost:5000/api/analytics/distribution/${userId}`)
       .then((res) => {
@@ -36,6 +40,27 @@ const Analytics = ({ user }) => {
         setLoading(false);
       });
   }, [userId]);
+
+  // 2. Fetch Real-Time Market Data
+  useEffect(() => {
+    const socket = io("http://localhost:5000");
+
+    socket.on("market_update", (data) => {
+      const timeString = new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const newDataPoint = { time: timeString };
+      
+      data.funds.forEach(fund => {
+        newDataPoint[fund.symbol] = parseFloat(fund.current_nav);
+      });
+
+      setLiveMarketData(prev => {
+        const updated = [...prev, newDataPoint];
+        return updated.length > 20 ? updated.slice(1) : updated;
+      });
+    });
+
+    return () => socket.disconnect();
+  }, []);
 
   const ASSET_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
@@ -61,8 +86,8 @@ const Analytics = ({ user }) => {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-pulse text-xl font-bold text-blue-600">Analyzing Portfolio...</div></div>;
-  if (error) return <div className="p-10 text-center text-red-500 font-bold bg-red-50 rounded-xl m-10 border border-red-200"><AlertCircle className="mx-auto mb-2 w-10 h-10"/> Error: {error}</div>;
+  if (loading) return <div className="loading-screen">Analyzing Portfolio...</div>;
+  if (error) return <div style={{ padding: '2.5rem', textAlign: 'center', color: '#ef4444' }}><AlertCircle size={40} style={{ margin: '0 auto 10px auto' }}/> Error: {error}</div>;
 
   const totalValue = chartData.reduce((sum, item) => sum + item.value, 0);
   const topAsset = chartData.length > 0 ? chartData.reduce((prev, current) => (prev.value > current.value) ? prev : current) : null;
@@ -86,71 +111,93 @@ const Analytics = ({ user }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 pt-8 px-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="analytics-page">
+      <div className="analytics-wrapper">
         
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+        <div className="analytics-header">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Deep Analytics</h1>
-            <p className="text-gray-500 mt-1 font-medium">Understand your wealth distribution & risk factors.</p>
+            <h1 className="analytics-title">Deep Analytics</h1>
+            <p className="analytics-subtitle">Understand your wealth distribution & live risk factors.</p>
           </motion.div>
           
           {chartData.length > 0 && (
             <motion.button 
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={downloadPDF}
-              className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-600 transition-colors shadow-lg flex items-center gap-2"
+              className="export-btn"
             >
-              <DownloadCloud className="w-5 h-5" /> Export Report
+              <DownloadCloud size={20} /> Export Report
             </motion.button>
           )}
         </div>
 
         {chartData.length === 0 ? (
-          <div className="bg-white p-12 rounded-3xl shadow-sm border border-gray-200 text-center">
-            <Target className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">No Data Available</h3>
-            <p className="text-gray-500">Your portfolio is currently empty. Make some investments!</p>
+          <div className="empty-state">
+            <Target size={64} color="#d1d5db" style={{ margin: '0 auto 16px auto' }} />
+            <h3 className="empty-title">No Data Available</h3>
+            <p className="empty-desc">Your portfolio is currently empty. Make some investments!</p>
           </div>
         ) : (
-          <div ref={reportRef} className="bg-gray-50 pb-4">
+          <div ref={reportRef} style={{ paddingBottom: '1rem' }}>
             
-            <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <motion.div variants={itemVariants} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-5">
-                <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><Target size={28} /></div>
+            <motion.div variants={containerVariants} initial="hidden" animate="show" className="summary-grid">
+              <motion.div variants={itemVariants} className="summary-card">
+                <div className="icon-box icon-blue"><Target size={28} /></div>
                 <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Diversification</p>
-                  <div className="flex items-baseline gap-2">
-                    <h2 className="text-3xl font-black text-gray-900">{diversificationScore}%</h2>
-                    <span className="text-sm font-semibold text-emerald-500">Optimal</span>
+                  <p className="card-label">Diversification</p>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                    <h2 className="card-value">{diversificationScore}%</h2>
+                    <span className="card-status">Optimal</span>
                   </div>
                 </div>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-5">
-                <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center"><ShieldAlert size={28} /></div>
+              <motion.div variants={itemVariants} className="summary-card">
+                <div className="icon-box icon-orange"><ShieldAlert size={28} /></div>
                 <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Risk Profile</p>
-                  <h2 className="text-2xl font-black text-gray-900">Moderate</h2>
-                  <p className="text-sm font-medium text-gray-500 mt-1">Balanced exposure</p>
+                  <p className="card-label">Risk Profile</p>
+                  <h2 className="card-value" style={{ fontSize: '1.5rem' }}>Moderate</h2>
+                  <p className="card-subtext">Balanced exposure</p>
                 </div>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-5">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center"><Award size={28} /></div>
-                <div className="w-full overflow-hidden">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Top Asset</p>
-                  <h2 className="text-xl font-black text-gray-900 truncate">{topAsset?.name}</h2>
-                  <p className="text-sm font-bold text-blue-600 mt-1">₹{topAsset?.value.toLocaleString()}</p>
+              <motion.div variants={itemVariants} className="summary-card">
+                <div className="icon-box icon-emerald"><Award size={28} /></div>
+                <div style={{ overflow: 'hidden', width: '100%' }}>
+                  <p className="card-label">Top Asset</p>
+                  <h2 className="card-value-sm">{topAsset?.name}</h2>
+                  <p className="card-subtext-blue">₹{topAsset?.value.toLocaleString()}</p>
                 </div>
               </motion.div>
             </motion.div>
 
-            <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <motion.div variants={containerVariants} initial="hidden" animate="show" className="charts-grid">
               
-              <motion.div variants={itemVariants} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-800 mb-6">5-Year Wealth Projection</h3>
-                <div className="h-80 w-full">
+              {/* REAL-TIME MARKET CHART ADDED HERE */}
+              <motion.div variants={itemVariants} className="chart-card chart-card-full">
+                <h3 className="chart-title chart-title-light"><span className="live-indicator"></span> Live Market Benchmark</h3>
+                <div className="chart-container">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={liveMarketData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" />
+                      <XAxis dataKey="time" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis domain={['auto', 'auto']} stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val}`} />
+                      <RechartsTooltip 
+                        contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }}
+                        itemStyle={{ fontWeight: 'bold' }}
+                      />
+                      <Legend verticalAlign="top" height={36} iconType="circle" />
+                      <Line type="monotone" dataKey="NIFTY50" name="Nifty 50" stroke="#3b82f6" strokeWidth={3} dot={false} isAnimationActive={false} />
+                      <Line type="monotone" dataKey="SMALLCAP" name="Small Cap" stroke="#10b981" strokeWidth={3} dot={false} isAnimationActive={false} />
+                      <Line type="monotone" dataKey="TECHFUND" name="Tech Fund" stroke="#8b5cf6" strokeWidth={3} dot={false} isAnimationActive={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
+
+              <motion.div variants={itemVariants} className="chart-card">
+                <h3 className="chart-title">5-Year Wealth Projection</h3>
+                <div className="chart-container">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={projectedGrowthData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
@@ -163,9 +210,9 @@ const Analytics = ({ user }) => {
                 </div>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-800 mb-6">Sector Exposure</h3>
-                <div className="h-80 w-full">
+              <motion.div variants={itemVariants} className="chart-card">
+                <h3 className="chart-title">Sector Exposure</h3>
+                <div className="chart-container">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={sectorData}>
                       <PolarGrid stroke="#e5e7eb" />
@@ -178,9 +225,9 @@ const Analytics = ({ user }) => {
                 </div>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 relative">
-                <h3 className="text-xl font-bold text-gray-800 mb-6">Asset Allocation</h3>
-                <div className="h-80 w-full relative">
+              <motion.div variants={itemVariants} className="chart-card">
+                <h3 className="chart-title">Asset Allocation</h3>
+                <div className="chart-container">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie data={chartData} cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={6} dataKey="value" stroke="none">
@@ -190,16 +237,16 @@ const Analytics = ({ user }) => {
                       <Legend verticalAlign="bottom" height={36} iconType="circle" />
                     </PieChart>
                   </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
-                    <span className="text-gray-400 font-bold text-xs uppercase">Total Assets</span>
-                    <span className="text-3xl font-black text-gray-900">{chartData.length}</span>
+                  <div className="pie-center-text">
+                    <span className="pie-center-label">Total Assets</span>
+                    <span className="pie-center-value">{chartData.length}</span>
                   </div>
                 </div>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-800 mb-6">Capital Distribution</h3>
-                <div className="h-80 w-full">
+              <motion.div variants={itemVariants} className="chart-card">
+                <h3 className="chart-title">Capital Distribution</h3>
+                <div className="chart-container">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                       <defs>
