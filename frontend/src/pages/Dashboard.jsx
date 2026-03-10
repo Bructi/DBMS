@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
@@ -14,13 +14,16 @@ const Dashboard = ({ user }) => {
   const userId = user?.id; 
   const location = useLocation();
   const navigate = useNavigate();
+  const hasProcessedPayment = useRef(false);
 
   // Handle Stripe Success Return
-  useEffect(() => {
+useEffect(() => {
     const params = new URLSearchParams(location.search);
     const isSuccess = params.get("success");
     
-    if (isSuccess) {
+    if (isSuccess && !hasProcessedPayment.current) {
+      hasProcessedPayment.current = true; // Lock it so it doesn't fire twice!
+      
       const fundId = params.get("fund_id");
       const amount = params.get("amount");
       const type = params.get("type");
@@ -33,7 +36,7 @@ const Dashboard = ({ user }) => {
         navigate("/", { replace: true });
         fetchPortfolio();
       });
-    } else {
+    } else if (!isSuccess) {
       fetchPortfolio();
     }
   }, [location, navigate, userId]);

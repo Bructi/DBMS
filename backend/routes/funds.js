@@ -29,4 +29,13 @@ router.post("/add", (req, res) => {
     });
 });
 
+// DELETE a fund from the marketplace
+router.delete("/:id", (req, res) => {
+    const { id } = req.params;
+    db.query("DELETE FROM mutual_funds WHERE id = ?", [id], (err, result) => {
+        if (err) return res.status(500).json(err);
+        res.json({ message: "Asset removed from marketplace successfully" });
+    });
+});
+
 export default router;
