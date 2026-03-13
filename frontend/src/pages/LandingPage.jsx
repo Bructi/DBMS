@@ -39,7 +39,6 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans overflow-hidden text-slate-800">
-      
       {/* 🌟 PUBLIC NAVBAR */}
       <nav className="fixed top-0 w-full bg-white/70 backdrop-blur-xl border-b border-slate-200/50 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
@@ -64,7 +63,7 @@ export default function LandingPage() {
             ✨ The Calm Way to Invest
           </div>
           <h1 className="text-5xl md:text-7xl font-black text-slate-800 leading-tight mb-6 tracking-tight">
-            Build wealth, <br/>
+            Build wealth, <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-teal-500">
               without the stress.
             </span>
@@ -82,7 +81,7 @@ export default function LandingPage() {
           </div>
 
           {/* 🤖 ROBOT NOTICE 1: Welcome Guide */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.5 }}
             className="bg-blue-50/80 backdrop-blur-md border border-blue-100 p-4 rounded-2xl shadow-sm flex gap-4 max-w-md"
           >
@@ -90,7 +89,7 @@ export default function LandingPage() {
               <Bot size={24} />
             </div>
             <div>
-              <h4 className="font-bold text-slate-800 flex items-center gap-1"><Sparkles size={14} className="text-teal-500"/> InvestBot Says:</h4>
+              <h4 className="font-bold text-slate-800 flex items-center gap-1"><Sparkles size={14} className="text-teal-500" /> InvestBot Says:</h4>
               <p className="text-sm text-slate-600 font-medium mt-1 leading-relaxed">
                 Hi! I'm here to help. Create a free account today to instantly access dummy funds and practice trading real Indian stocks!
               </p>
@@ -102,7 +101,7 @@ export default function LandingPage() {
         {/* Hero Infographic Graphic */}
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="md:w-1/2 relative w-full mt-10 md:mt-0">
           <div className="absolute inset-0 bg-gradient-to-tr from-blue-200 to-teal-100 rounded-[3rem] transform rotate-3 scale-105 -z-10 blur-xl opacity-60"></div>
-          
+
           <div className="relative w-full aspect-[4/3] bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)] border-4 border-white overflow-hidden flex flex-col justify-end">
             <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-blue-50/40"></div>
             <div className="absolute inset-0 flex flex-col justify-between py-8 opacity-20">
@@ -127,7 +126,7 @@ export default function LandingPage() {
               <path d="M0,85 Q25,90 50,70 T100,40" fill="none" stroke="#14b8a6" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.6" />
             </svg>
           </div>
-          
+
           <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }} className="absolute -left-6 top-10 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white flex items-center gap-4 z-30">
             <div className="bg-teal-50 p-3 rounded-2xl text-teal-600"><TrendingUp size={22} /></div>
             <div>
@@ -177,7 +176,7 @@ export default function LandingPage() {
       <div className="bg-white border-b border-slate-100 py-8">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-12 opacity-80">
           <div className="flex items-center gap-2">
-            <div className="flex text-amber-400"><Star size={20} fill="currentColor"/><Star size={20} fill="currentColor"/><Star size={20} fill="currentColor"/><Star size={20} fill="currentColor"/><Star size={20} fill="currentColor"/></div>
+            <div className="flex text-amber-400"><Star size={20} fill="currentColor" /><Star size={20} fill="currentColor" /><Star size={20} fill="currentColor" /><Star size={20} fill="currentColor" /><Star size={20} fill="currentColor" /></div>
             <span className="font-bold text-slate-700">4.9/5 Average Rating</span>
           </div>
           <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-slate-300"></div>
@@ -199,7 +198,7 @@ export default function LandingPage() {
         </div>
 
         {/* 🤖 ROBOT NOTICE 2: Pro Tip */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true, margin: "-100px" }}
           className="max-w-2xl mx-auto bg-teal-50/80 backdrop-blur-md border border-teal-100 p-4 rounded-2xl shadow-sm flex items-center gap-4 mb-12"
         >
@@ -207,7 +206,7 @@ export default function LandingPage() {
             <Bot size={24} />
           </div>
           <div>
-            <h4 className="font-bold text-slate-800 flex items-center gap-1"><Sparkles size={14} className="text-blue-500"/> Pro Tip: Keyboard Shortcuts</h4>
+            <h4 className="font-bold text-slate-800 flex items-center gap-1"><Sparkles size={14} className="text-blue-500" /> Pro Tip: Keyboard Shortcuts</h4>
             <p className="text-sm text-slate-600 font-medium mt-1 leading-relaxed">
               Once inside the app, hit the <kbd className="bg-white px-2 py-0.5 rounded-md shadow-sm border border-slate-200 text-slate-700 font-mono text-xs font-bold mx-1">/</kbd> key anywhere to instantly pull up the Global Stock Search!
             </p>
@@ -216,11 +215,11 @@ export default function LandingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
           <div className="hidden md:block absolute top-1/2 left-[15%] right-[15%] h-0.5 bg-gradient-to-r from-blue-100 via-teal-100 to-blue-100 -z-10 transform -translate-y-1/2"></div>
-          
+
           {[
-            { step: "01", title: "Create an Account", desc: "Sign up in seconds. No lengthy paperwork, just a secure and seamless onboarding.", icon: <Smartphone size={28}/> },
-            { step: "02", title: "Explore the Market", desc: "Search through live NSE/BSE data. Find the companies you believe in effortlessly.", icon: <Globe size={28}/> },
-            { step: "03", title: "Invest & Track", desc: "Use dummy funds to buy assets securely via Stripe. Watch your wealth grow visually.", icon: <BarChart3 size={28}/> }
+            { step: "01", title: "Create an Account", desc: "Sign up in seconds. No lengthy paperwork, just a secure and seamless onboarding.", icon: <Smartphone size={28} /> },
+            { step: "02", title: "Explore the Market", desc: "Search through live NSE/BSE data. Find the companies you believe in effortlessly.", icon: <Globe size={28} /> },
+            { step: "03", title: "Invest & Track", desc: "Use dummy funds to buy assets securely via Stripe. Watch your wealth grow visually.", icon: <BarChart3 size={28} /> }
           ].map((item, i) => (
             <motion.div key={i} variants={featureVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-50px" }} transition={{ delay: i * 0.2 }} className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 text-center relative hover:-translate-y-2 transition-transform duration-300">
               <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-white px-4 py-1 rounded-full text-sm font-black text-blue-600 border border-slate-100 shadow-sm">{item.step}</div>
@@ -249,9 +248,9 @@ export default function LandingPage() {
               </div>
             </div>
           </motion.div>
-          
+
           <motion.div variants={featureVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <h2 className="text-3xl md:text-5xl font-black text-slate-800 mb-6 leading-tight">Professional tools,<br/>calm experience.</h2>
+            <h2 className="text-3xl md:text-5xl font-black text-slate-800 mb-6 leading-tight">Professional tools,<br />calm experience.</h2>
             <p className="text-lg text-slate-500 font-medium mb-8 leading-relaxed">
               We stripped away the confusing charts and aggressive notifications. InvestIQ is designed to give you clarity and peace of mind while managing your portfolio.
             </p>
@@ -272,15 +271,15 @@ export default function LandingPage() {
           <h2 className="text-3xl md:text-4xl font-black text-slate-800 mb-4">Got Questions?</h2>
           <p className="text-lg text-slate-500 font-medium">Everything you need to know about getting started.</p>
         </div>
-        
+
         <div className="space-y-4">
           {faqs.map((faq, index) => (
-            <motion.div 
-              key={index} 
+            <motion.div
+              key={index}
               initial={false}
               className={`bg-white border ${openFaq === index ? 'border-blue-200 shadow-md' : 'border-slate-200 shadow-sm hover:border-blue-100'} rounded-2xl overflow-hidden transition-all duration-300`}
             >
-              <button 
+              <button
                 className="w-full flex items-center justify-between p-6 text-left"
                 onClick={() => setOpenFaq(openFaq === index ? null : index)}
               >
@@ -289,9 +288,9 @@ export default function LandingPage() {
               </button>
               <AnimatePresence>
                 {openFaq === index && (
-                  <motion.div 
-                    initial={{ height: 0, opacity: 0 }} 
-                    animate={{ height: "auto", opacity: 1 }} 
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3, ease: "easeInOut" }}
                   >
@@ -310,7 +309,7 @@ export default function LandingPage() {
       <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600 py-24 px-6 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-400/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
-        
+
         <div className="max-w-3xl mx-auto text-center relative z-10">
           <h2 className="text-4xl md:text-5xl font-black text-white mb-6">Ready to find your financial peace?</h2>
           <p className="text-xl text-blue-100 mb-10 font-medium">Join InvestIQ today and experience the calmest way to manage your portfolio.</p>

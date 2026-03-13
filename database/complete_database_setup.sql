@@ -1,29 +1,28 @@
--- 1. Create Users Table
-CREATE TABLE users (
+CREATE DATABASE IF NOT EXISTS investiq_db;
+USE investiq_db;
+
+CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Create Mutual Funds / Stocks Table
-CREATE TABLE mutual_funds (
+CREATE TABLE IF NOT EXISTS mutual_funds (
     id INT AUTO_INCREMENT PRIMARY KEY,
     fund_name VARCHAR(255) NOT NULL,
-    ticker_symbol VARCHAR(50) UNIQUE NOT NULL,
-    current_nav DECIMAL(10,2) DEFAULT 0
+    ticker_symbol VARCHAR(50) NOT NULL,
+    current_nav DECIMAL(10, 2) NOT NULL
 );
 
--- 3. Create Portfolio (Active Holdings) Table
-CREATE TABLE portfolio (
+CREATE TABLE IF NOT EXISTS portfolio (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     fund_id INT NOT NULL,
-    investment_amount DECIMAL(15,2) NOT NULL,
+    investment_amount DECIMAL(15, 2) NOT NULL,
     investment_type VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    investment_date DATE NOT NULL,
     FOREIGN KEY (fund_id) REFERENCES mutual_funds(id) ON DELETE CASCADE
 );
 

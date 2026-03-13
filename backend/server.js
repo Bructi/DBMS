@@ -10,10 +10,12 @@ import analyticsRoutes from "./routes/analytics.js";
 import authRoutes from "./routes/auth.js";
 import liveRoutes from "./routes/live.js";
 import paymentRoutes from "./routes/payment.js";
+import watchlistRoutes from "./routes/watchlist.js";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
 
 app.get("/", (req, res) => {
     res.send("InvestIQ Backend Running");
@@ -35,6 +37,9 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/live", liveRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/watchlist", watchlistRoutes);
+
+
 
 // Simulate Live Mutual Fund NAV updates
 io.on('connection', (socket) => {

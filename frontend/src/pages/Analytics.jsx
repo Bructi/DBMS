@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { io } from "socket.io-client";
 import { 
   PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend, 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
@@ -12,27 +11,27 @@ import { DownloadCloud, Target, ShieldAlert, Award, AlertCircle } from "lucide-r
 import "./Analytics.css";
 
 const Analytics = ({ user }) => {
-  const [chartData, setChartData] = useState([]);
-  const [liveMarketData, setLiveMarketData] = useState([]);
+  const [portfolioData, setPortfolioData] = useState([]); // Raw Portfolio data
+  const [liveQuotes, setLiveQuotes] = useState([]);       // Exact live prices
+  const [liveHistoryLine, setLiveHistoryLine] = useState([]); // Array for the scrolling chart
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
   const userId = user?.id || 1;
   const reportRef = useRef();
 
-  // 1. Fetch User Portfolio Data
+  const ASSET_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+
+  // 1. Fetch exact user portfolio to get Tickers
   useEffect(() => {
-    fetch(`http://localhost:5000/api/analytics/distribution/${userId}`)
+    fetch(`http://localhost:5000/api/dashboard/${userId}`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch analytics data");
         return res.json();
       })
       .then((data) => {
-        const formattedData = data.map((item) => ({
-          name: item.fund_name,
-          value: Number(item.total_invested),
-        }));
-        setChartData(formattedData);
+        setPortfolioData(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch((err) => {
@@ -41,28 +40,51 @@ const Analytics = ({ user }) => {
       });
   }, [userId]);
 
-  // 2. Fetch Real-Time Market Data
+  // 2. Poll background data to construct live, recalculating graphs
   useEffect(() => {
-    const socket = io("http://localhost:5000");
+    if (portfolioData.length === 0) return;
 
-    socket.on("market_update", (data) => {
-      const timeString = new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      const newDataPoint = { time: timeString };
-      
-      data.funds.forEach(fund => {
-        newDataPoint[fund.symbol] = parseFloat(fund.current_nav);
-      });
+    const fetchLive = async () => {
+      const symbols = [...new Set(portfolioData.map(p => p.ticker_symbol))].filter(Boolean).join(",");
+      if (!symbols) return;
 
-      setLiveMarketData(prev => {
-        const updated = [...prev, newDataPoint];
-        return updated.length > 20 ? updated.slice(1) : updated;
-      });
-    });
+      try {
+        const res = await fetch(`http://localhost:5000/api/live/quotes?symbols=${symbols}`);
+        if(res.ok) {
+           const data = await res.json();
+           setLiveQuotes(data);
 
-    return () => socket.disconnect();
+           // Feed the live Line Chart!
+           const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+           const newDataPoint = { time: timeString };
+           data.forEach(quote => {
+              newDataPoint[quote.symbol] = quote.regularMarketPrice;
+           });
+           
+           setLiveHistoryLine(prev => {
+             const updated = [...prev, newDataPoint];
+             return updated.length > 20 ? updated.slice(1) : updated;
+           });
+        }
+      } catch (err) {}
+    };
+
+    fetchLive(); // First run
+    const interval = setInterval(fetchLive, 5000); 
+    return () => clearInterval(interval);
+  }, [portfolioData]);
+
+  // 3. Dynamically map LIVE Data for Pie and Bar charts!
+  const liveChartData = portfolioData.reduce((acc, item) => {
+    const quote = liveQuotes.find(q => q.symbol === item.ticker_symbol);
+    const liveChange = quote ? parseFloat(quote.regularMarketChangePercent) : 0;
+    const liveVal = Number(item.investment_amount) * (1.125 + (liveChange / 100));
+
+    const existing = acc.find(f => f.name === item.fund_name);
+    if (existing) existing.value += liveVal;
+    else acc.push({ name: item.fund_name, value: liveVal });
+    return acc;
   }, []);
-
-  const ASSET_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.15 } } };
   const itemVariants = { hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 250, damping: 20 } } };
@@ -81,17 +103,18 @@ const Analytics = ({ user }) => {
       pdf.text(`InvestIQ Analytics: ${user?.username || 'User'}`, 15, 20);
       pdf.addImage(dataUrl, "PNG", 0, 35, pdfWidth, imgHeight);
       pdf.save(`InvestIQ_Report_${new Date().getTime()}.pdf`);
-    } catch (err) {
-      alert("Failed to generate PDF.");
-    }
+    } catch (err) { alert("Failed to generate PDF."); }
   };
 
   if (loading) return <div className="loading-screen">Analyzing Portfolio...</div>;
   if (error) return <div style={{ padding: '2.5rem', textAlign: 'center', color: '#ef4444' }}><AlertCircle size={40} style={{ margin: '0 auto 10px auto' }}/> Error: {error}</div>;
 
-  const totalValue = chartData.reduce((sum, item) => sum + item.value, 0);
-  const topAsset = chartData.length > 0 ? chartData.reduce((prev, current) => (prev.value > current.value) ? prev : current) : null;
-  const diversificationScore = chartData.length > 0 ? Math.min(Math.round((chartData.length / 5) * 100), 100) : 0;
+  const totalValue = liveChartData.reduce((sum, item) => sum + item.value, 0);
+  const topAsset = liveChartData.length > 0 ? liveChartData.reduce((prev, current) => (prev.value > current.value) ? prev : current) : null;
+  const diversificationScore = liveChartData.length > 0 ? Math.min(Math.round((liveChartData.length / 5) * 100), 100) : 0;
+  
+  // Array of uniquely owned symbols for the Line Chart
+  const uniqueSymbols = [...new Set(portfolioData.map(p => p.ticker_symbol))];
 
   const projectedGrowthData = [
     { year: '2024 (Now)', value: totalValue },
@@ -120,18 +143,17 @@ const Analytics = ({ user }) => {
             <p className="analytics-subtitle">Understand your wealth distribution & live risk factors.</p>
           </motion.div>
           
-          {chartData.length > 0 && (
+          {liveChartData.length > 0 && (
             <motion.button 
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-              onClick={downloadPDF}
-              className="export-btn"
+              onClick={downloadPDF} className="export-btn"
             >
               <DownloadCloud size={20} /> Export Report
             </motion.button>
           )}
         </div>
 
-        {chartData.length === 0 ? (
+        {liveChartData.length === 0 ? (
           <div className="empty-state">
             <Target size={64} color="#d1d5db" style={{ margin: '0 auto 16px auto' }} />
             <h3 className="empty-title">No Data Available</h3>
@@ -147,7 +169,7 @@ const Analytics = ({ user }) => {
                   <p className="card-label">Diversification</p>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
                     <h2 className="card-value">{diversificationScore}%</h2>
-                    <span className="card-status">Optimal</span>
+                    <span className="card-status" style={{color: '#10b981', fontWeight: 'bold', fontSize: '0.875rem'}}>Optimal</span>
                   </div>
                 </div>
               </motion.div>
@@ -157,7 +179,7 @@ const Analytics = ({ user }) => {
                 <div>
                   <p className="card-label">Risk Profile</p>
                   <h2 className="card-value" style={{ fontSize: '1.5rem' }}>Moderate</h2>
-                  <p className="card-subtext">Balanced exposure</p>
+                  <p className="card-subtext" style={{color: '#64748b', fontSize: '0.875rem', fontWeight: '500'}}>Balanced exposure</p>
                 </div>
               </motion.div>
 
@@ -166,30 +188,28 @@ const Analytics = ({ user }) => {
                 <div style={{ overflow: 'hidden', width: '100%' }}>
                   <p className="card-label">Top Asset</p>
                   <h2 className="card-value-sm">{topAsset?.name}</h2>
-                  <p className="card-subtext-blue">₹{topAsset?.value.toLocaleString()}</p>
+                  <p className="card-subtext-blue" style={{color: '#2563eb', fontWeight: 'bold', marginTop: '4px'}}>₹{topAsset?.value.toLocaleString('en-IN', {maximumFractionDigits: 2})}</p>
                 </div>
               </motion.div>
             </motion.div>
 
             <motion.div variants={containerVariants} initial="hidden" animate="show" className="charts-grid">
               
-              {/* REAL-TIME MARKET CHART ADDED HERE */}
+              {/* REAL-TIME PORTFOLIO BENCHMARK CHART */}
               <motion.div variants={itemVariants} className="chart-card chart-card-full">
-                <h3 className="chart-title chart-title-light"><span className="live-indicator"></span> Live Market Benchmark</h3>
+                <h3 className="chart-title chart-title-light"><span className="live-indicator"></span> Your Live Portfolio Benchmark</h3>
                 <div className="chart-container">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={liveMarketData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                    <LineChart data={liveHistoryLine} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" />
                       <XAxis dataKey="time" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
                       <YAxis domain={['auto', 'auto']} stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val}`} />
-                      <RechartsTooltip 
-                        contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }}
-                        itemStyle={{ fontWeight: 'bold' }}
-                      />
+                      <RechartsTooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }} itemStyle={{ fontWeight: 'bold' }} />
                       <Legend verticalAlign="top" height={36} iconType="circle" />
-                      <Line type="monotone" dataKey="NIFTY50" name="Nifty 50" stroke="#3b82f6" strokeWidth={3} dot={false} isAnimationActive={false} />
-                      <Line type="monotone" dataKey="SMALLCAP" name="Small Cap" stroke="#10b981" strokeWidth={3} dot={false} isAnimationActive={false} />
-                      <Line type="monotone" dataKey="TECHFUND" name="Tech Fund" stroke="#8b5cf6" strokeWidth={3} dot={false} isAnimationActive={false} />
+                      
+                      {uniqueSymbols.map((symbol, index) => (
+                        <Line key={symbol} type="monotone" dataKey={symbol} name={symbol.replace('.NS','')} stroke={ASSET_COLORS[index % ASSET_COLORS.length]} strokeWidth={3} dot={false} isAnimationActive={false} />
+                      ))}
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -230,16 +250,17 @@ const Analytics = ({ user }) => {
                 <div className="chart-container">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={chartData} cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={6} dataKey="value" stroke="none">
-                        {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={ASSET_COLORS[index % ASSET_COLORS.length]} />)}
+                      {/* isAnimationActive set to true so slices morph in real time */}
+                      <Pie data={liveChartData} cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={6} dataKey="value" stroke="none" isAnimationActive={true}>
+                        {liveChartData.map((entry, index) => <Cell key={`cell-${index}`} fill={ASSET_COLORS[index % ASSET_COLORS.length]} />)}
                       </Pie>
-                      <RechartsTooltip formatter={(value) => [`₹${value.toLocaleString()}`, 'Invested']} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                      <RechartsTooltip formatter={(value) => [`₹${value.toLocaleString('en-IN', {maximumFractionDigits: 2})}`, 'Live Value']} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
                       <Legend verticalAlign="bottom" height={36} iconType="circle" />
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="pie-center-text">
-                    <span className="pie-center-label">Total Assets</span>
-                    <span className="pie-center-value">{chartData.length}</span>
+                    <span style={{fontSize: '0.75rem', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase'}}>Total Assets</span>
+                    <span style={{fontSize: '1.5rem', fontWeight: '900', color: '#0f172a'}}>{liveChartData.length}</span>
                   </div>
                 </div>
               </motion.div>
@@ -248,7 +269,7 @@ const Analytics = ({ user }) => {
                 <h3 className="chart-title">Capital Distribution</h3>
                 <div className="chart-container">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                    <BarChart data={liveChartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                       <defs>
                         <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="#10b981" stopOpacity={1}/>
@@ -258,8 +279,8 @@ const Analytics = ({ user }) => {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                       <XAxis dataKey="name" tick={{fontSize: 10, fill: '#6b7280'}} interval={0} angle={-25} textAnchor="end" height={70} axisLine={false} tickLine={false} />
                       <YAxis tickFormatter={(val) => `₹${val}`} tick={{fill: '#6b7280'}} axisLine={false} tickLine={false} width={80} />
-                      <RechartsTooltip formatter={(value) => [`₹${value.toLocaleString()}`, 'Amount']} cursor={{fill: '#f3f4f6'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                      <Bar dataKey="value" fill="url(#barGradient)" radius={[6, 6, 0, 0]} barSize={45} />
+                      <RechartsTooltip formatter={(value) => [`₹${value.toLocaleString('en-IN', {maximumFractionDigits: 2})}`, 'Live Amount']} cursor={{fill: '#f3f4f6'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                      <Bar dataKey="value" fill="url(#barGradient)" radius={[6, 6, 0, 0]} barSize={45} isAnimationActive={true} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
