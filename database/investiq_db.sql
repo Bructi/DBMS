@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 22, 2026 at 02:39 PM
+-- Generation Time: Mar 22, 2026 at 04:53 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -52,7 +52,12 @@ INSERT INTO `audit_logs` (`log_id`, `user_id`, `action_type`, `amount`, `transac
 (11, 3, 'SELL ORDER', 1000.00, '2026-03-10 18:19:34'),
 (12, 3, 'SELL ORDER', 1200.00, '2026-03-10 18:19:37'),
 (13, 3, 'SELL ORDER', 5000.00, '2026-03-10 18:19:40'),
-(14, 3, 'BUY ORDER', 100.00, '2026-03-22 12:45:20');
+(14, 3, 'BUY ORDER', 100.00, '2026-03-22 12:45:20'),
+(15, 3, 'SELL ORDER', 5000.00, '2026-03-22 15:44:01'),
+(16, 3, 'SELL ORDER', 1200.00, '2026-03-22 15:44:03'),
+(17, 3, 'BUY ORDER', 2345.00, '2026-03-22 15:47:05'),
+(18, 3, 'BUY ORDER', 2000.00, '2026-03-22 15:50:13'),
+(19, 3, 'BUY ORDER', 234.00, '2026-03-22 15:52:19');
 
 -- --------------------------------------------------------
 
@@ -79,7 +84,8 @@ INSERT INTO `mutual_funds` (`id`, `fund_name`, `ticker_symbol`, `current_nav`) V
 (16, 'CEAT LIMITED', 'CEATLTD.NS', 0.00),
 (17, 'E-mini S&P Regional Banks Selec', 'SXB=F', 0.00),
 (18, 'TATA CAPITAL LIMITED', 'TATACAP.NS', 0.00),
-(20, 'Honda Motor Company, Ltd.', 'HMC', 0.00);
+(20, 'Honda Motor Company, Ltd.', 'HMC', 0.00),
+(22, 'OYO CORP', '9755.T', 0.00);
 
 -- --------------------------------------------------------
 
@@ -101,14 +107,15 @@ CREATE TABLE `portfolio` (
 --
 
 INSERT INTO `portfolio` (`id`, `user_id`, `fund_id`, `investment_amount`, `investment_type`, `investment_date`) VALUES
-(22, 3, 10, 5000.00, 'Lump Sum', '2026-03-07'),
-(30, 3, 11, 1200.00, 'Intraday', '2026-03-07'),
 (31, 3, 11, 1200.00, 'Intraday', '2026-03-07'),
 (32, 3, 15, 1200.00, 'Delivery', '2026-03-07'),
 (35, 3, 11, 1200.00, 'Delivery', '2026-03-07'),
 (37, 3, 17, 1000.00, 'Delivery', '2026-03-07'),
 (38, 3, 18, 1000.00, 'Delivery', '2026-03-10'),
-(39, 3, 18, 100.00, 'Delivery', '2026-03-22');
+(39, 3, 18, 100.00, 'Delivery', '2026-03-22'),
+(42, 3, 12, 2345.00, 'Delivery', '2026-03-22'),
+(44, 3, 15, 2000.00, 'Delivery', '2026-03-22'),
+(45, 3, 12, 234.00, 'Delivery', '2026-03-22');
 
 --
 -- Triggers `portfolio`
@@ -151,6 +158,27 @@ INSERT INTO `users` (`id`, `username`, `email`, `password`, `created_at`) VALUES
 (2, 'Aniket', 'aniket@test.com', '$2b$10$70o00sHCgqVIsXjto6rDReYM8iifxqhM7V20Qblu0Bl5Aqq.eQuMK', '2026-02-23 15:04:06'),
 (3, 'Ashish Chaurasiya', 'ashish@investiq.com', '$2b$10$1MMDM0j0CgHHe5SCvj.DzOkp/1G.knS2KBo.b6Pw/mn.uNz2PM5Tm', '2026-02-23 15:18:33');
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `watchlist`
+--
+
+CREATE TABLE `watchlist` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `ticker_symbol` varchar(50) NOT NULL,
+  `fund_name` varchar(255) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `watchlist`
+--
+
+INSERT INTO `watchlist` (`id`, `user_id`, `ticker_symbol`, `fund_name`, `created_at`) VALUES
+(4, 3, 'RELIANCE.NS', 'Reliance Industries Ltd.', '2026-03-22 15:01:02');
+
 --
 -- Indexes for dumped tables
 --
@@ -183,6 +211,13 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `email` (`email`);
 
 --
+-- Indexes for table `watchlist`
+--
+ALTER TABLE `watchlist`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_user_asset` (`user_id`,`ticker_symbol`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -190,25 +225,31 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
-  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `mutual_funds`
 --
 ALTER TABLE `mutual_funds`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `portfolio`
 --
 ALTER TABLE `portfolio`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `watchlist`
+--
+ALTER TABLE `watchlist`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- Constraints for dumped tables
@@ -219,6 +260,12 @@ ALTER TABLE `users`
 --
 ALTER TABLE `portfolio`
   ADD CONSTRAINT `portfolio_ibfk_1` FOREIGN KEY (`fund_id`) REFERENCES `mutual_funds` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `watchlist`
+--
+ALTER TABLE `watchlist`
+  ADD CONSTRAINT `watchlist_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

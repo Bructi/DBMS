@@ -25,6 +25,7 @@ export default function Navbar({ user, setUser }) {
         <Link to="/" className="text-gray-600 hover:text-blue-600 font-bold transition">Dashboard</Link>
         <Link to="/funds" className="text-gray-600 hover:text-blue-600 font-bold transition">Marketplace</Link>
         <Link to="/analytics" className="text-gray-600 hover:text-blue-600 font-bold transition">Analytics</Link>
+        <Link to="/glossary" className="text-gray-600 hover:text-blue-600 font-bold transition">Glossary</Link>
         
         <div className="flex items-center space-x-4 ml-4 pl-6 border-l border-gray-300">
           <span className="text-sm font-bold text-gray-800 bg-blue-50 px-3 py-1.5 rounded-lg">
