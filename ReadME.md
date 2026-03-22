@@ -36,7 +36,7 @@ Developed specifically as a comprehensive Database Management System (DBMS) proj
 As a DBMS-focused project, InvestIQ utilizes a strictly normalized relational database structure:
 
 1. **`users`**: Secure credential storage with encrypted passwords.
-2. **`funds` / `marketplace**`: Available assets tied to global ticker symbols.
+2. **`funds`** / **`marketplace`**: Available assets tied to global ticker symbols.
 3. **`portfolio`**: Active user holdings linking users to funds with tracked investment amounts and order types.
 4. **`watchlist`**: A junction table with `UNIQUE` constraints preventing duplicate asset tracking per user.
 5. **`audit_logs`**: An immutable ledger populated exclusively via SQL `AFTER INSERT` and `AFTER DELETE` triggers on the portfolio table.
@@ -52,8 +52,8 @@ Make sure you have [Node.js](https://nodejs.org/) and [XAMPP](https://www.apache
 ### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/Bructi/investiq.git
-cd investiq 
+git clone https://github.com/Bructi/DBMS.git
+cd DBMS
 
 ```
 
@@ -93,7 +93,7 @@ STRIPE_SECRET_KEY=sk_test_your_stripe_key
 Start the backend server:
 
 ```bash
-npm start
+node ./server.js
 
 ```
 

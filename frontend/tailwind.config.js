@@ -4,7 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  darkMode: 'dark', // <-- THIS IS THE MAGIC LINE
+  darkMode: 'dark', 
   theme: {
     extend: {},
   },
