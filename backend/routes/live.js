@@ -37,6 +37,17 @@ router.get("/search/:query", async (req, res) => {
     }
 });
 
+// NEW: Fetch live news for a specific ticker
+router.get("/news/:symbol", async (req, res) => {
+    try {
+        const result = await yahooFinance.search(req.params.symbol);
+        // Yahoo Finance search returns both 'quotes' and 'news' arrays
+        res.json(result.news || []); 
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get 1-year historical data (With Bulletproof Fallback Engine)
 router.get("/history/:symbol", async (req, res) => {
     try {
