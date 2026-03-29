@@ -17,6 +17,7 @@ import Glossary from "./pages/Glossary";
 import Profile from "./pages/Profile";
 import Leaderboard from "./pages/Leaderboard";
 import Admin from "./pages/Admin";
+import TransactionHistory from "./pages/TransactionHistory"
 
 function App() {
   const [user, setUser] = useState(null);
@@ -86,6 +87,8 @@ function App() {
           />
 
           <Route path="/admin" element={<Admin />} />
+
+          <Route path="/history" element={user ? <TransactionHistory user={user} /> : <Navigate to="/login" />} />
         </Routes>
       </div>
     </Router>

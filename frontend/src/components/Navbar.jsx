@@ -59,6 +59,8 @@ export default function Navbar({ user, setUser }) {
           Glossary
         </Link>
 
+        <Link to="/history" className="hover:text-blue-200 transition font-medium">History</Link>
+
         <div className="flex items-center space-x-4 ml-4 pl-6 border-l border-gray-300">
           {/* ✨ DYNAMIC PROFILE BADGE (Clickable) */}
           <Link

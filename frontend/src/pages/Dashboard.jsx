@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import SIPCalculator from "../components/SIPCalculator";
 import {
   AreaChart,
   Area,
@@ -739,6 +740,15 @@ const Dashboard = ({ user }) => {
           transition={{ delay: 0.4 }}
           className="table-box"
         >
+          {/* --- SIP CALCULATOR (New Code) --- */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            style={{ marginTop: "2rem", marginBottom: "2rem" }}
+          >
+            <SIPCalculator />
+          </motion.div>
           <div className="table-header">
             <Briefcase color="#2563eb" size={20} /> Your Holdings
           </div>

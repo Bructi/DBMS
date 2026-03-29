@@ -44,40 +44,41 @@ router.post("/buy", (req, res) => {
 
 // SELL STOCK: Add to Wallet, Remove from Portfolio
 router.post("/sell", (req, res) => {
-  const { user_id, portfolio_id } = req.body; // REMOVED 'amount' from req.body
+  // 1. Bring back 'amount' to receive the LIVE value (Original + Profit) from the frontend
+  const { user_id, portfolio_id, amount } = req.body; 
 
-  // 1. Fetch the actual investment amount from the database securely
+  if (!amount) {
+    return res.status(400).json({ error: "Sale amount is required!" });
+  }
+
+  // 2. Verify the user actually owns this portfolio item before selling
   db.query(
-    "SELECT investment_amount FROM portfolio WHERE id = ? AND user_id = ?",
+    "SELECT id FROM portfolio WHERE id = ? AND user_id = ?",
     [portfolio_id, user_id],
     (err, portfolioItems) => {
       if (err || portfolioItems.length === 0) {
-        return res
-          .status(404)
-          .json({ error: "Portfolio item not found or unauthorized" });
+        return res.status(404).json({ error: "Portfolio item not found or unauthorized" });
       }
 
-      const actualAmount = Number(portfolioItems[0].investment_amount);
-
-      // 2. Get Wallet Balance
+      // 3. Get Current Wallet Balance
       db.query(
         "SELECT wallet_balance FROM users WHERE id = ?",
         [user_id],
         (err, users) => {
-          if (err || users.length === 0)
-            return res.status(500).json({ error: "User not found" });
+          if (err || users.length === 0) return res.status(500).json({ error: "User not found" });
 
           const currentBalance = Number(users[0].wallet_balance);
 
-          // 3. Add the verified sold amount back to wallet
-          const newBalance = currentBalance + actualAmount;
+          // 4. Add the LIVE amount back to the wallet (This locks in the profit!)
+          const newBalance = currentBalance + Number(amount);
+          
           db.query(
             "UPDATE users SET wallet_balance = ? WHERE id = ?",
             [newBalance, user_id],
             (err2) => {
               if (err2) return res.status(500).json(err2);
 
-              // 4. Remove the asset from the portfolio
+              // 5. Remove the asset from the portfolio
               db.query(
                 "DELETE FROM portfolio WHERE id = ? AND user_id = ?",
                 [portfolio_id, user_id],
